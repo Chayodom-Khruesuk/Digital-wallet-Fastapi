@@ -11,11 +11,11 @@ from models.database import engine
 router = APIRouter()
 
 
-@router.post("/{wallet_id}/{item_id}", tags=["transaction"])
+@router.post("/{wallet_id}/{item_id}", tags=["Transaction"])
 async def create_transaction(
     transaction: CreateTransaction, wallet_id: int, item_id: int
 ) -> Transaction:
-    data = transaction.model_dump()
+    data = transaction.dict()
     db_transaction = DBTransaction(**data)
     db_transaction.wallet_id = wallet_id
     db_transaction.item_id = item_id
@@ -30,7 +30,7 @@ async def create_transaction(
         if db_wallet.balance < balance:
             raise HTTPException(status_code=400, detail="Insufficient balance")
         db_wallet.balance -= balance
-        db_wallet.sqlmodel_update(db_wallet.model_dump())
+        db_wallet.sqlmodel_update(db_wallet.dict())
 
         db_transaction.balance = balance
 
@@ -38,20 +38,20 @@ async def create_transaction(
         db.commit()
         db.refresh(db_transaction)
 
-    return Transaction.model_validate(db_transaction)
+    return Transaction.from_orm(db_transaction)
 
 
-@router.get("/{transaction_id}", tags=["transaction"])
+@router.get("/{transaction_id}", tags=["Transaction"])
 async def get_transaction(transaction_id: int) -> Transaction:
     with Session(engine) as db:
         db_transaction = db.get(DBTransaction, transaction_id)
         if db_transaction is None:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        return Transaction.model_validate(db_transaction)
+        return Transaction.from_orm(db_transaction)
 
 
-@router.get("/{wallet_id}", tags=["transaction"])
+@router.get("/{wallet_id}", tags=["Transaction"])
 async def get_transactions(wallet_id: int) -> TransactionList:
     with Session(engine) as db:
         db_transactions = db.exec(
@@ -66,7 +66,7 @@ async def get_transactions(wallet_id: int) -> TransactionList:
     )
 
 
-@router.delete("/{transaction_id}", tags=["transaction"])
+@router.delete("/{transaction_id}", tags=["Transaction"])
 async def delete_transaction(transaction_id: int) -> dict:
     with Session(engine) as db:
         db_transaction = db.get(DBTransaction, transaction_id)

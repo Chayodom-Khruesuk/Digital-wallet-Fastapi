@@ -7,8 +7,6 @@ engine = create_engine(
     echo = True,
     connect_args = connect_args,
 )
-
-
 def get_db():
     db = Session(engine)
     try:

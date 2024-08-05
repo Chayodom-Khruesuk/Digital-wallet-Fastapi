@@ -24,7 +24,7 @@ class Item(BaseItem):
     id: int
 
 class DBItem(BaseItem):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     merchant_id: int | None = Field(default=None, foreign_key="merchant.id")
     merchant: Merchant | None = Relationship(back_populates="item")
 

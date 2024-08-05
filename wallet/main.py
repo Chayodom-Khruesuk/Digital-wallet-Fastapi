@@ -17,6 +17,3 @@ app.include_router(transaction_router.router)
 #SQLModel.metadata.create_drop(engine)
 SQLModel.metadata.create_all(engine)
 
-@app.get("/")
-def root():
-    return {"message": "Digital Wallet"}
