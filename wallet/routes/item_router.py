@@ -2,14 +2,15 @@ from fastapi import APIRouter, HTTPException
 
 from sqlmodel import Session, select
 
-from models.item_models import Item, DBItem, CreatedItem, UpdatedItem
-from models.database import engine
-router = APIRouter()
+from models.item_models import Item, ItemList, DBItem, CreatedItem, UpdatedItem
 
+from models.database import engine
+
+router = APIRouter()
 
 @router.post("/item/{merchant_id}", tags=["item"])
 async def create_item(item: CreatedItem, merchant_id: int) -> Item:
-    data = item.dict()
+    data = item.model_dump()
     db_item = DBItem(**data)
     db_item.merchant_id = merchant_id
     with Session(engine) as db:
@@ -17,11 +18,11 @@ async def create_item(item: CreatedItem, merchant_id: int) -> Item:
         db.commit()
         db.refresh(db_item)
 
-    return Item.from_orm(db_item)
+    return Item.model_validate(db_item)
 
 
-@router.get("/items", tags=["item"])
-async def get_items(page: int = 1, page_size: int = 10) -> Item:
+@router.get("/item", tags=["item"])
+async def get_items(page: int = 1, page_size: int = 10) -> ItemList:
     with Session(engine) as db:
         db_items = db.exec(
             select(DBItem).offset((page - 1) * page_size).limit(page_size)
@@ -34,7 +35,7 @@ async def get_item(item_id: int) -> Item:
         db_item = db.get(DBItem, item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")
-        return Item.from_orm(db_item)
+        return Item.model_validate(db_item)
 
 
 @router.put("/item/{item_id}", tags=["item"])
@@ -43,13 +44,13 @@ async def update_item(item_id: int, item: UpdatedItem) -> Item:
         db_item = db.get(DBItem, item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")
-        for key, value in item.dict().items():
+        for key, value in item.model_dump().items():
             setattr(db_item, key, value)
             db.add(db_item)
             db.commit()
             db.refresh(db_item)
 
-    return Item.from_orm(db_item)
+    return Item.model_validate(db_item)
 
 
 @router.delete("/item/{item_id}", tags=["item"])

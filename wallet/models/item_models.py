@@ -2,7 +2,9 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
+
+from models.merchant_model import Merchant
 
 class BaseItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -23,6 +25,8 @@ class Item(BaseItem):
 
 class DBItem(BaseItem):
     id: Optional[int] = Field(default=None, primary_key=True)
+    merchant_id: int | None = Field(default=None, foreign_key="merchant.id")
+    merchant: Merchant | None = Relationship(back_populates="item")
 
 class ItemList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
