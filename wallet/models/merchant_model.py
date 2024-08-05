@@ -13,9 +13,8 @@ class BaseMerchant(BaseModel):
 
     name: str
     description: str | None = None
-    telephone: str | None = None
-    email: str | None = None
-    age: int | None = None
+    tax_id: int
+  
 
 class CreatedMerchant(BaseMerchant):
     pass

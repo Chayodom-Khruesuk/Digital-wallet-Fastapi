@@ -10,10 +10,8 @@ class BaseWallet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
-    description: str | None = None
-    telephone: str | None = None
-    email: str | None = None
-    age: int | None = None
+    balance: float = 0.0
+    
 
 class CreatedWallet(BaseWallet):
     pass
@@ -25,6 +23,7 @@ class Wallet(BaseWallet):
     id: int
 
 class DBWallet(Wallet, SQLModel, table=True):
+    __tablename__ = "wallets"
     id: Optional[int] = Field(default=None, primary_key=True)
 
     merchant_id: Optional[int] = Field(default=None, foreign_key="dbmerchant.id")
