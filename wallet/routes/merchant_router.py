@@ -2,28 +2,30 @@ from fastapi import APIRouter, HTTPException
 
 from sqlmodel import Session, select
 
+from models.item_models import BaseItem
 from models.merchant_model import CreatedMerchant, DBMerchant, Merchant, MerchantList, UpdatedMerchant
 
-from models.database import engine
+from models import engine
+from routes.item_router import create_item
 
-router = APIRouter()
+router = APIRouter(prefix="/merchants", tags=["merchant"])
 
-
-@router.post("/merchant", tags=["Merchant"])
+@router.post("")
 async def create_merchant(item: CreatedMerchant) -> Merchant:
     data = item.dict()
-    db_item = DBMerchant(**data)
-    with Session(engine) as db:
-        db.add(db_item)
-        db.commit()
-        db.refresh(db_item)
+    db_merchant = DBMerchant(**data)
+    with Session(engine) as session:
+        session.add(db_merchant)
+        session.commit()
+        session.refresh(db_merchant)
 
-    return Merchant.from_orm(db_item)
+    return Merchant.from_orm(db_merchant)
 
-@router.get("/merchants", tags=["Merchant"])
+
+@router.get("")
 async def get_merchants(page: int = 1, page_size: int = 10) -> MerchantList:
-    with Session(engine) as db:
-        db_merchants = db.exec(
+    with Session(engine) as session:
+        db_merchants = session.exec(
             select(DBMerchant).offset((page - 1) * page_size).limit(page_size)
         ).all()
 
@@ -35,37 +37,38 @@ async def get_merchants(page: int = 1, page_size: int = 10) -> MerchantList:
     )
 
 
-@router.get("/merchant/{merchant_id}", tags=["Merchant"])
+@router.get("/{merchant_id}")
 async def get_merchant(merchant_id: int) -> Merchant:
-    with Session(engine) as db:
-        db_merchant = db.get(DBMerchant, merchant_id)
+    with Session(engine) as session:
+        db_merchant = session.get(DBMerchant, merchant_id)
         if db_merchant is None:
             raise HTTPException(status_code=404, detail="Item not found")
 
     return Merchant.from_orm(db_merchant)
 
 
-@router.put("/merchant/{merchant_id}", tags=["Merchant"])
+@router.put("/{merchant_id}")
 async def update_merchant(merchant_id: int, merchant: UpdatedMerchant) -> Merchant:
-    with Session(engine) as db:
-        db_merchant = db.get(DBMerchant, merchant_id)
+    with Session(engine) as session:
+        db_merchant = session.get(DBMerchant, merchant_id)
         if db_merchant is None:
             raise HTTPException(status_code=404, detail="Item not found")
         for key, value in merchant.dict().items():
             setattr(db_merchant, key, value)
-        db.add(db_merchant)
-        db.commit()
-        db.refresh(db_merchant)
+        session.add(db_merchant)
+        session.commit()
+        session.refresh(db_merchant)
 
     return Merchant.from_orm(db_merchant)
 
-@router.delete("/merchant/{merchant_id}", tags=["Merchant"])
+
+@router.delete("/{merchant_id}")
 async def delete_merchant(merchant_id: int) -> dict:
-    with Session(engine) as db:
-        db_merchant = db.get(DBMerchant, merchant_id)
+    with Session(engine) as session:
+        db_merchant = session.get(DBMerchant, merchant_id)
         if db_merchant is None:
             raise HTTPException(status_code=404, detail="Item not found")
-        db.delete(db_merchant)
-        db.commit()
+        session.delete(db_merchant)
+        session.commit()
 
     return dict(message="Merchant deleted successfully")

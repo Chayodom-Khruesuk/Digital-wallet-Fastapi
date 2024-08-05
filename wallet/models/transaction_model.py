@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 from models.item_models import DBItem
 from models.wallet_model import DBWallet
@@ -9,29 +9,31 @@ from models.wallet_model import DBWallet
 class BaseTransaction(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    name: str
     balance: float
+    quantity: int = 1
 
 
-class CreateTransaction(BaseTransaction):
+class CreatedTransaction(BaseTransaction):
     pass
 
 
-class UpdateTransaction(BaseTransaction):
+class UpdatedTransaction(BaseTransaction):
     pass
 
 
 class Transaction(BaseTransaction):
     id: int
 
-class DBTransaction(BaseTransaction):
+class DBTransaction(Transaction, SQLModel, table=True):
+    __tablename__ = "transactions"
     id: Optional[int] = Field(default=None, primary_key=True)
+
     wallet_id: Optional[int] = Field(default=None, foreign_key="wallets.id")
     wallet: Optional[DBWallet] = Relationship(back_populates="transactions")
 
     item_id: Optional[int] = Field(default=None, foreign_key="items.id")
     item: Optional[DBItem] = Relationship(back_populates="transactions")
-
+    
 class TransactionList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     transactions: list[Transaction]
