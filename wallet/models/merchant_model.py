@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, SQLModel, Relationship
 
 if TYPE_CHECKING:
-    from models.item_models import Item
+    from models.item_models import DBItem
+    from models.wallet_model import DBWallet
 
 class BaseMerchant(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -28,7 +29,8 @@ class Merchant(BaseMerchant):
 class DBMerchant(Merchant, SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    items: list["Item"] = Relationship(back_populates="merchant")
+    items: list["DBItem"] = Relationship(back_populates="merchant", cascade_delete=True)
+    wallet: Optional["DBWallet"] = Relationship(back_populates="merchant", cascade_delete=True)
 
 class MerchantList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
