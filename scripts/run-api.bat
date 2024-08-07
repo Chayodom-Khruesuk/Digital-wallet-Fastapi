@@ -1,0 +1,1 @@
+uvicorn "wallet.main:create_app" --factory --reload

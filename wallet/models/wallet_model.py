@@ -5,6 +5,7 @@ from sqlmodel import Field, Relationship, SQLModel
 class BaseWallet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    merchant_name: str | None = None
     balance: float = 0.0
 
 
@@ -28,5 +29,5 @@ class DBWallet(Wallet, SQLModel, table=True):
     transactions: list["DBTransaction"] = Relationship(back_populates="wallet")
 
 if TYPE_CHECKING:
-    from models.merchant_model import DBMerchant
-    from models.transaction_model import DBTransaction
+    from .merchant_model import DBMerchant
+    from .transaction_model import DBTransaction
