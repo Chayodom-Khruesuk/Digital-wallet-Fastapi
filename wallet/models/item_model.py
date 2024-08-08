@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class BaseItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
+    
     name: str
     description: str | None = None
     price: float = 0.12
@@ -39,5 +39,5 @@ class ItemList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     items: list[Item]
     page: int
-    page_size: int
+    page_count: int
     size_per_page: int

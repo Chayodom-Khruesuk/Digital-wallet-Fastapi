@@ -14,7 +14,6 @@ router = APIRouter(prefix="/wallets", tags=["Wallet"])
 @router.post("/{merchant_id}")
 async def create_wallet(
     wallet: CreatedWallet, 
-    merchant_id: int,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Wallet:
     db_wallet = DBWallet(**wallet.dict())
