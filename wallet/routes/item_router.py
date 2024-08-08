@@ -33,17 +33,18 @@ async def create_item(
 async def get_items(
     session: Annotated[AsyncSession, Depends(models.get_session)],
     page: int = 1,
+    size_per_page: int = SIZE_PER_PAGE,
 ) -> ItemList:
-    result = await session.exec(select(DBItem).offset((page - 1) * SIZE_PER_PAGE).limit(SIZE_PER_PAGE)).all()
-    
+    result = await session.exec(select(DBItem).offset((page - 1) * size_per_page).limit(size_per_page))
+    item = result.all()
     page_count = int(
         math.ceil(
-           (await session.exec(select(func.count(models.DBItem.id)))).first()
+           (await session.exec(select(func.count(DBItem.id)))).first()
             / SIZE_PER_PAGE
         )
     )
     return ItemList.from_orm(
-        dict(items=result, page_count=page_count, page=page, size_per_page=SIZE_PER_PAGE)
+        dict(items=item, page_count=page_count, page=page, size_per_page=size_per_page)
     )
 
 
@@ -76,7 +77,8 @@ async def update_item(
 
 @router.delete("/{item_id}")
 async def delete_item(
-    item_id: int, session: Annotated[AsyncSession, Depends(models.get_session)]
+    item_id: int, 
+    session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> dict:
     db_item = await session.get(DBItem, item_id)
     await session.delete(db_item)

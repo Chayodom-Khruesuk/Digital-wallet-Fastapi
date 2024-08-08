@@ -2,12 +2,15 @@ from typing import Optional, TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 
+from . import user_model
+
 class BaseMerchant(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
     description: str | None = None
     tax_id: str
+    user_id: int
 
 class CreatedMerchant(BaseMerchant):
     pass
@@ -23,9 +26,12 @@ class DBMerchant(Merchant, SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     items: list["DBItem"] = Relationship(back_populates="merchant", cascade_delete=True)
-    wallet: Optional["DBWallet"] = Relationship(
-        back_populates="merchant", cascade_delete=True
-    )
+
+    wallet: Optional["DBWallet"] = Relationship(back_populates="merchant", cascade_delete=True)
+
+    user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    user: user_model.DBUser | None = Relationship()
+
 
 class MerchantList(BaseModel):
     model_config = ConfigDict(from_attributes=True)

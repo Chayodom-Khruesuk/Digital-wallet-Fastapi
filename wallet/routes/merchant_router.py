@@ -2,10 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from sqlmodel import select
 
+from wallet import deps
+
 from ..models.merchant_model import CreatedMerchant, DBMerchant, Merchant, MerchantList, UpdatedMerchant
 
 from typing import Annotated
 
+from ..models import user_model
 from .. import models
 
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -16,8 +19,10 @@ router = APIRouter(prefix="/merchants", tags=["Merchant"])
 async def create_merchant(
     merchant: CreatedMerchant, 
     session: Annotated[AsyncSession, Depends(models.get_session)],
+    current_user: Annotated[user_model, Depends(deps.get_current_user)],
 ) -> Merchant:
-    db_merchant = DBMerchant(**merchant.dict())
+    db_merchant = DBMerchant.parse_obj(merchant)
+    db_merchant.user = current_user
     session.add(db_merchant)
     await session.commit()
     await session.refresh(db_merchant)
