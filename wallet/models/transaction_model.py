@@ -9,8 +9,9 @@ from .wallet_model import DBWallet
 class BaseTransaction(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    wallet_id: int
     balance: float
-    quantity: int = 1
+    description: str | None = None
 
 
 class CreatedTransaction(BaseTransaction):

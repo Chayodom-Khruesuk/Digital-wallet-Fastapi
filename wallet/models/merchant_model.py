@@ -8,8 +8,8 @@ class BaseMerchant(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
+    balance: float = 0.0
     description: str | None = None
-    tax_id: str
     user_id: int
 
 class CreatedMerchant(BaseMerchant):

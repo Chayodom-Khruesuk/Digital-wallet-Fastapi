@@ -5,7 +5,7 @@ from sqlmodel import Field, Relationship, SQLModel
 class BaseWallet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    merchant_name: str | None = None
+    name: str | None = None
     balance: float = 0.0
 
 
