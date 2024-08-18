@@ -28,7 +28,7 @@ async def create_transaction(
     db_wallet = await session.get(DBWallet, wallet_id)
     db_item = await session.get(DBItem, item_id)
    
-    if not db_wallet | db_item :
+    if not db_wallet or not db_item :
         raise HTTPException(status_code=404, detail="Item or Wallet not found")
 
     if db_wallet.balance < db_item.price:
