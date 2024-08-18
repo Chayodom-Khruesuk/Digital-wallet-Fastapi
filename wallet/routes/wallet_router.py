@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 
+from wallet.models.merchant_model import DBMerchant
+from wallet.models.user_model import DBUser
+
 from ..models.wallet_model import CreatedWallet, DBWallet, UpdatedWallet, Wallet
 
 from typing import Annotated
@@ -13,15 +16,23 @@ router = APIRouter(prefix="/wallets", tags=["Wallet"])
 
 @router.post("/{merchant_id}")
 async def create_wallet(
-    wallet: CreatedWallet, 
+    wallet: CreatedWallet,
+    merchant_id: int,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Wallet:
-    db_wallet = DBWallet(**wallet.dict())
+    data = wallet.dict()
+    db_wallet = DBWallet(**data)
+    db_wallet.merchant_id = merchant_id
+
+    db_merchant = await session.get(DBMerchant, merchant_id)
+    db_wallet.name = db_merchant.name
+
     session.add(db_wallet)
     await session.commit()
     await session.refresh(db_wallet)
 
     return Wallet.from_orm(db_wallet)
+
 
 @router.get("/{wallet_id}")
 async def get_wallet(
@@ -40,8 +51,9 @@ async def update_wallet(
     wallet: UpdatedWallet,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Wallet:
+    data = wallet.dict()
     db_wallet = await session.get(DBWallet, wallet_id)
-    db_wallet.sqlmodel_update(**wallet.dict())
+    db_wallet.sqlmodel_update(data)
     session.add(db_wallet)
     await session.commit()
     await session.refresh(db_wallet)

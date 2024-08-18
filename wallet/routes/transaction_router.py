@@ -1,40 +1,42 @@
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException, Depends
 
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from ..models.item_model import DBItem
+from wallet.models.item_model import DBItem
+from wallet.models.wallet_model import DBWallet
 
 from ..models.transaction_model import CreatedTransaction, DBTransaction, Transaction, TransactionList, UpdatedTransaction
-
-from ..models.wallet_model import DBWallet
-
-from typing import Annotated
-
 from .. import models
-
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(prefix="/transactions", tags=["Transaction"])
 
 @router.post("/{wallet_id}/{item_id}")
 async def create_transaction(
-    transaction: CreatedTransaction, 
-    wallet_id: int, 
+    transaction: CreatedTransaction,
+    wallet_id: int,
     item_id: int,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Transaction:
+    data = transaction.dict()
+    db_transaction = DBTransaction(**data)
+    db_transaction.wallet_id = wallet_id
+    db_transaction.item_id = item_id
+
     db_wallet = await session.get(DBWallet, wallet_id)
     db_item = await session.get(DBItem, item_id)
-    if not db_wallet or not db_item:
-        raise HTTPException(status_code=404, detail="Wallet or Item not found")
+    if db_wallet is None or db_item is None:
+        raise HTTPException(status_code=404, detail="Item or Wallet not found")
 
-    balance = db_item.price * transaction.quantity
-    if db_wallet.balance < balance:
+    if db_wallet.balance < db_item.price:
         raise HTTPException(status_code=400, detail="Insufficient balance")
+    db_wallet.balance -= db_item.price
+    db_wallet.sqlmodel_update(db_wallet.dict())
 
-    db_wallet.balance -= balance
-    db_transaction = DBTransaction(**transaction.dict())
-    
+    db_transaction.price = db_item.price
+
     session.add(db_wallet)
     session.add(db_transaction)
     await session.commit()

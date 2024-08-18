@@ -93,7 +93,6 @@ class DBUser(BaseUser, SQLModel, table=True):
     register_date: datetime.datetime = Field(default_factory=datetime.datetime.now)
     updated_date: datetime.datetime = Field(default_factory=datetime.datetime.now)
     last_login_date: datetime.datetime | None = Field(default=None)
-
     async def has_roles(self, roles):
         for role in roles:
             if role in self.roles:

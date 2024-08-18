@@ -11,26 +11,6 @@ from ..models.user_model import ChangedPassword, RegisteredUser, UpdatedUser, Us
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get("/me")
-def get_me(current_user: User = Depends(deps.get_current_user)) -> User:
-    return current_user
-
-
-@router.get("/{user_id}")
-async def get(
-    user_id: int,
-    session: Annotated[AsyncSession, Depends(models.get_session)],
-) -> User:
-
-    user = await session.get(DBUser, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Not found this user",
-        )
-    return user
-
-
 @router.post("/create")
 async def create_user(
     user_info: RegisteredUser,
@@ -56,6 +36,24 @@ async def create_user(
 
     return user
 
+@router.get("/me")
+def get_me(current_user: User = Depends(deps.get_current_user)) -> User:
+    return current_user
+
+
+@router.get("/{user_id}")
+async def get(
+    user_id: int,
+    session: Annotated[AsyncSession, Depends(models.get_session)],
+) -> User:
+
+    user = await session.get(DBUser, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found this user",
+        )
+    return user
 
 @router.put("/{user_id}/change_password")
 async def change_password(

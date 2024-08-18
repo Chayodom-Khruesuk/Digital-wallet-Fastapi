@@ -19,36 +19,44 @@ router = APIRouter(prefix="/merchants", tags=["Merchant"])
 async def create_merchant(
     merchant: CreatedMerchant, 
     session: Annotated[AsyncSession, Depends(models.get_session)],
-    current_user: Annotated[user_model, Depends(deps.get_current_user)],
 ) -> Merchant:
-    db_merchant = DBMerchant.parse_obj(merchant)
-    db_merchant.user = current_user
+    data = merchant.dict()
+    db_merchant = DBMerchant(**data)
+
     session.add(db_merchant)
     await session.commit()
     await session.refresh(db_merchant)
 
     return Merchant.from_orm(db_merchant)
 
-@router.get("")
-async def read_merchants(
-    session: Annotated[AsyncSession, Depends(models.get_session)],
-) -> MerchantList:
-    merchants = await session.exec(select(DBMerchant)).all()
-
-    return MerchantList.from_orm(
-        dict(merchants=merchants, page=0, page_size=0, size_per_page=0)
-    )
-
 @router.get("/{merchant_id}")
-async def get_merchant(
+async def get_wallet(
     merchant_id: int,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Merchant:
-    db_merchant = await session.get(DBMerchant, merchant_id)
-    if db_merchant is None:
-        return Merchant.from_orm(db_merchant)
+    db_wallet = await session.get(DBMerchant, merchant_id)
+    if db_wallet is None:
+        raise HTTPException(status_code=404, detail="Merchant not found")
     
-    raise HTTPException(status_code=404, detail="Merchant not found")
+    return Merchant.from_orm(db_wallet)
+
+@router.get("")
+async def get_merchants(
+    session: Annotated[AsyncSession, Depends(models.get_session)],
+    page: int = 1,
+    page_size: int = 10,
+) -> MerchantList:
+    result = await session.exec(
+        select(DBMerchant).offset((page - 1) * page_size).limit(page_size)
+    )
+    db_merchants = result.all()
+
+    return MerchantList(
+        merchants=db_merchants,
+        page=page,
+        page_size=page_size,
+        size_per_page=len(db_merchants),
+    )
 
 @router.put("/{merchant_id}")
 async def update_merchant(
@@ -56,8 +64,9 @@ async def update_merchant(
     merchant: UpdatedMerchant,
     session: Annotated[AsyncSession, Depends(models.get_session)],
 ) -> Merchant:
+    data = merchant.dict()
     db_merchant = await session.get(DBMerchant, merchant_id)
-    db_merchant.sqlmodel_update(**merchant.dict())
+    db_merchant.sqlmodel_update(data)
     session.add(db_merchant)
     await session.commit()
     await session.refresh(db_merchant)

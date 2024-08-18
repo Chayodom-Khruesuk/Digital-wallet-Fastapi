@@ -35,8 +35,8 @@ async def get_items(
     page: int = 1,
     size_per_page: int = SIZE_PER_PAGE,
 ) -> ItemList:
-    result = await session.exec(select(DBItem).offset((page - 1) * size_per_page).limit(size_per_page))
-    item = result.all()
+    data = await session.exec(select(DBItem).offset((page - 1) * size_per_page).limit(size_per_page))
+    item = data.all()
     page_count = int(
         math.ceil(
            (await session.exec(select(func.count(DBItem.id)))).first()

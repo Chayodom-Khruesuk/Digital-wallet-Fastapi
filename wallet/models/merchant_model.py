@@ -8,9 +8,6 @@ class BaseMerchant(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
-    balance: float = 0.0
-    description: str | None = None
-    user_id: int
 
 class CreatedMerchant(BaseMerchant):
     pass
@@ -21,7 +18,7 @@ class UpdatedMerchant(BaseMerchant):
 class Merchant(BaseMerchant):
     id: int
 
-class DBMerchant(Merchant, SQLModel, table=True):
+class DBMerchant(BaseMerchant, SQLModel, table=True):
     __tablename__ = "merchants"
     id: Optional[int] = Field(default=None, primary_key=True)
 

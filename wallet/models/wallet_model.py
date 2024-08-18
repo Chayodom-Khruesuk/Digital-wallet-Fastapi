@@ -2,6 +2,8 @@ from typing import Optional, TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 
+from wallet.models.user_model import DBUser
+
 class BaseWallet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -19,7 +21,7 @@ class UpdatedWallet(BaseWallet):
 class Wallet(BaseWallet):
     id: int
 
-class DBWallet(Wallet, SQLModel, table=True):
+class DBWallet(BaseWallet, SQLModel, table=True):
     __tablename__ = "wallets"
     id: Optional[int] = Field(default=None, primary_key=True)
 
