@@ -1,10 +1,11 @@
 import datetime
+from typing import Optional, TYPE_CHECKING
 
 import pydantic
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Relationship, SQLModel, Field
 
 from passlib.context import CryptContext
 
@@ -108,3 +109,8 @@ class DBUser(BaseUser, SQLModel, table=True):
 
     async def is_use_citizen_id_as_password(self):
         return pwd_context.verify(self.citizen_id, self.password)
+    
+    wallet: Optional["DBWallet"] = Relationship(back_populates="user")
+
+if TYPE_CHECKING:
+    from .wallet_model import DBWallet

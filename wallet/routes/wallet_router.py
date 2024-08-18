@@ -33,6 +33,19 @@ async def create_wallet(
 
     return Wallet.from_orm(db_wallet)
 
+@router.post("/create_user_wallet/{user_id}")
+async def create_user_wallet(
+    wallet: CreatedWallet,
+    user_id: int,
+    session: Annotated[AsyncSession, Depends(models.get_session)],
+) -> Wallet:
+    data = wallet.dict()
+    db_wallet = DBWallet(**data)
+    session.add(db_wallet)
+    await session.commit()
+    await session.refresh(db_wallet)
+    
+    return Wallet.from_orm(db_wallet)
 
 @router.get("/{wallet_id}")
 async def get_wallet(
