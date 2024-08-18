@@ -13,7 +13,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(prefix="/wallets", tags=["Wallet"])
 
-
 @router.post("/{merchant_id}")
 async def create_wallet(
     wallet: CreatedWallet,
@@ -67,6 +66,45 @@ async def update_wallet(
     data = wallet.dict()
     db_wallet = await session.get(DBWallet, wallet_id)
     db_wallet.sqlmodel_update(data)
+    session.add(db_wallet)
+    await session.commit()
+    await session.refresh(db_wallet)
+
+    return Wallet.from_orm(db_wallet)
+
+@router.put("/{wallet_id}/increase")
+async def increase_balance(
+    wallet_id: int,
+    amount: float,
+    session: Annotated[AsyncSession, Depends(models.get_session)],
+) -> Wallet:
+    db_wallet = await session.get(DBWallet, wallet_id)
+    if not db_wallet:
+        raise HTTPException(status_code=404, detail="Wallet not found")
+    
+    db_wallet.balance += amount
+
+    session.add(db_wallet)
+    await session.commit()
+    await session.refresh(db_wallet)
+
+    return Wallet.from_orm(db_wallet)
+    
+@router.put("/{wallet_id}/decrease")
+async def decrease_balance(
+    wallet_id: int,
+    amount: float,
+    session: Annotated[AsyncSession, Depends(models.get_session)],
+) -> Wallet:
+    db_wallet = await session.get(DBWallet, wallet_id)
+    if db_wallet is None:
+        raise HTTPException(status_code=404, detail="Wallet not found")
+    
+    if db_wallet.balance < amount:
+        raise HTTPException(status_code=400, detail="Insufficient balance")
+    
+    db_wallet.balance -= amount
+
     session.add(db_wallet)
     await session.commit()
     await session.refresh(db_wallet)
