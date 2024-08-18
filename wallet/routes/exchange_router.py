@@ -27,10 +27,10 @@ async def exchange_money(
     if request.from_currency == Currency.THB:
         thb_amount = request.amount
         rate = EXCHANGE_RATES[request.to_currency]
-        to_amount = thb_amount * rate
+        to_amount = thb_amount / rate
     else:
         rate = EXCHANGE_RATES[request.from_currency]
-        thb_amount = request.amount / rate
+        thb_amount = request.amount * rate
 
         if request.to_currency == Currency.THB:
             to_amount = thb_amount
@@ -39,7 +39,7 @@ async def exchange_money(
             to_amount = thb_amount * to_rate
     
     rate = EXCHANGE_RATES[request.to_currency]
-    to_amount = request.amount * rate
+    to_amount = request.amount / rate
     
     if wallet.balance < thb_amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
