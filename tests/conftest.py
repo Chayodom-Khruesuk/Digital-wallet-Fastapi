@@ -37,7 +37,7 @@ def app_fixture():
     if not path.exists():
         path.mkdir()
 
-    app = main.create_app()
+    app = main.create_app(settings)
     asyncio.run(models.create_all())
 
     yield app
@@ -138,3 +138,4 @@ async def example_merchant_user1(
     await session.commit()
     await session.refresh(merchant)
     return merchant
+

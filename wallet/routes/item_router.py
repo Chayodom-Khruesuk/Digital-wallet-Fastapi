@@ -27,7 +27,7 @@ async def create_item(
     await session.commit()
     await session.refresh(dbitem)
 
-    return Item.from_orm(dbitem)
+    return Item.model_validate(dbitem)
 
 @router.get("")
 async def get_items(
@@ -43,7 +43,7 @@ async def get_items(
             / SIZE_PER_PAGE
         )
     )
-    return ItemList.from_orm(
+    return ItemList.model_validate(
         dict(items=item, page_count=page_count, page=page, size_per_page=size_per_page)
     )
 
@@ -54,7 +54,7 @@ async def get_item(
 ) -> Item:
     db_item = await session.get(DBItem, item_id)
     if db_item:
-        return Item.from_orm(db_item)
+        return Item.model_validate(db_item)
 
     raise HTTPException(status_code=404, detail="Item not found")
 
@@ -73,7 +73,7 @@ async def update_item(
     await session.commit()
     await session.refresh(db_item)
 
-    return Item.from_orm(db_item)
+    return Item.model_validate(db_item)
 
 @router.delete("/{item_id}")
 async def delete_item(

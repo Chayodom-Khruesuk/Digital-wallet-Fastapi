@@ -1,8 +1,4 @@
-from gevent import monkey
 from requests import session
-
-monkey.patch_all()
-
 from fastapi import FastAPI
 
 from .models import init_db
@@ -17,9 +13,7 @@ from . import models
 async def lifespan(app: FastAPI):
     yield
     if models.engine is not None:
-        # Close the DB connection
         await session.close()
-
 
 def create_app(settings=None):
     if not settings:
