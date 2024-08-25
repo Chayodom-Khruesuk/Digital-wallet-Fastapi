@@ -1,35 +1,34 @@
 import sys
 import os
 
+from sqlmodel import select
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
 import asyncio
-from contextlib import asynccontextmanager
 
+import pathlib
+import datetime
+
+import sys
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
 
 
-from typing import Any, Dict, Optional
 from pydantic_settings import SettingsConfigDict
-
-
 
 from wallet import models, config, main, security
 import pytest
 import pytest_asyncio
 
-import pathlib
-import datetime
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 SettingsTesting = config.Settings
 SettingsTesting.model_config = SettingsConfigDict(
     env_file=".testing.env", validate_assignment=True, extra="allow"
 )
-
 
 @pytest.fixture(name="app", scope="session")
 def app_fixture():
@@ -38,12 +37,10 @@ def app_fixture():
     if not path.exists():
         path.mkdir()
 
-    app = main.create_app(settings)
-
+    app = main.create_app()
     asyncio.run(models.create_all())
 
     yield app
-
 
 @pytest.fixture(name="client", scope="session")
 def client_fixture(app: FastAPI) -> AsyncClient:
@@ -72,7 +69,7 @@ async def example_user1(session: models.AsyncSession) -> models.DBUser:
     username = "user1"
 
     query = await session.exec(
-        models.select(models.DBUser).where(models.DBUser.username == username).limit(1)
+        select(models.DBUser).where(models.DBUser.username == username).limit(1)
     )
     user = query.one_or_none()
     if user:
@@ -80,7 +77,7 @@ async def example_user1(session: models.AsyncSession) -> models.DBUser:
 
     user = models.DBUser(
         username=username,
-        password=password,
+        password = password,
         email="test@test.com",
         first_name="Firstname",
         last_name="lastname",
@@ -88,8 +85,6 @@ async def example_user1(session: models.AsyncSession) -> models.DBUser:
         
         role="merchants"
     )
-
-    await user.set_password(password)
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -97,13 +92,14 @@ async def example_user1(session: models.AsyncSession) -> models.DBUser:
 
 
 @pytest_asyncio.fixture(name="token_user1")
-async def oauth_token_user1(user1: models.DBUser) -> dict:
+async def oauth_token_user1(user1: models.DBUser) -> models.Token:
     settings = SettingsTesting()
     access_token_expires = datetime.timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     user = user1
     return models.Token(
+        user_id=user.id,  
         access_token=security.create_access_token(
             data={"sub": user.id},
             expires_delta=access_token_expires,
@@ -116,10 +112,8 @@ async def oauth_token_user1(user1: models.DBUser) -> dict:
         scope="",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
         expires_at=datetime.datetime.now() + access_token_expires,
-        issued_at=user.last_login_date,
-        user_id=user.id,
+        issued_at=user1.last_login_date,   
     )
-
 
 @pytest_asyncio.fixture(name="merchant_user1")
 async def example_merchant_user1(
@@ -128,8 +122,8 @@ async def example_merchant_user1(
     name = "merchant1"
 
     query = await session.exec(
-        models.select(models.DBMerchant)
-        .where(models.DBMerchant.name == name, models.DBMerchant.user_id == user1.id)
+        select(models.DBMerchant)
+        .where(models.DBMerchant.name == name)
         .limit(1)
     )
     merchant = query.one_or_none()
@@ -137,7 +131,7 @@ async def example_merchant_user1(
         return merchant
 
     merchant = models.DBMerchant(
-        name=name, user=user1, decription="Merchant Description", tax_id="0000000000000"
+        name=name, user=user1, decription="Merchant Description"
     )
 
     session.add(merchant)

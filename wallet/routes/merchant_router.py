@@ -28,7 +28,7 @@ async def create_merchant(
     await session.commit()
     await session.refresh(db_merchant)
 
-    return Merchant.from_orm(db_merchant)
+    return Merchant.model_validate(db_merchant)
 
 @router.get("/{merchant_id}")
 async def get_wallet(
@@ -39,7 +39,7 @@ async def get_wallet(
     if db_wallet is None:
         raise HTTPException(status_code=404, detail="Merchant not found")
     
-    return Merchant.from_orm(db_wallet)
+    return Merchant.model_validate(db_wallet)
 
 @router.get("")
 async def get_merchants(
@@ -72,7 +72,7 @@ async def update_merchant(
     await session.commit()
     await session.refresh(db_merchant)
 
-    return Merchant.from_orm(db_merchant)
+    return Merchant.model_validate(db_merchant)
 
 @router.delete("/{merchant_id}")
 async def delete_merchant(
