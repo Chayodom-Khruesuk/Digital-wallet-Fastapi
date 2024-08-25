@@ -74,11 +74,7 @@ class Token(BaseModel):
     expires_at: datetime.datetime
     scope: str
     issued_at: datetime.datetime
-
-
-class TokenData(BaseModel):
-    user_id: str | None = None
-
+    user_id: int
 
 class ChangedPasswordUser(BaseModel):
     current_password: str

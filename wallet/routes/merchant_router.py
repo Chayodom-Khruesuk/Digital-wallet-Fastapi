@@ -19,10 +19,11 @@ router = APIRouter(prefix="/merchants", tags=["Merchant"])
 async def create_merchant(
     merchant: CreatedMerchant, 
     session: Annotated[AsyncSession, Depends(models.get_session)],
+    current_user: Annotated[user_model.User, Depends(deps.get_current_user)],
 ) -> Merchant:
-    data = merchant.dict()
-    db_merchant = DBMerchant(**data)
-
+    db_merchant = DBMerchant.model_validate(merchant)
+    
+    db_merchant.user = current_user
     session.add(db_merchant)
     await session.commit()
     await session.refresh(db_merchant)
